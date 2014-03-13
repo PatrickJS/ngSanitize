@@ -1,31 +1,9 @@
 !function(root, factory) {
 
-  // Set up ngSanitize appropriately for the environment. Start with AMD.
-  if (typeof define === 'function' && define.amd) {
-    define(['exports'], function(exports) {
-      // Export global even in AMD case in case this script is loaded with
-      // others that may still expect a global ngSanitize.
-      root.ngSanitize = factory(root, exports);
-    });
+  root.ngSanitize = factory(root);
 
-  // Next for Node.js or CommonJS. jQuery may not be needed as a module.
-  } else if (typeof exports !== 'undefined') {
-    factory(root, exports);
+}(this, function(root) {
 
-  // Finally, as a browser global.
-  } else {
-    root.ngSanitize = factory(root, {});
-  }
-
-}(this, function(root, ngSanitize) {
-  'use strict';
-
-  ngSanitize.aHrefSanitizationWhitelist  = aHrefSanitizationWhitelist;
-  ngSanitize.imgSrcSanitizationWhitelist = imgSrcSanitizationWhitelist;
-  ngSanitize.ngSanitize = ngSanitize;
-
-  var _aHrefSanitizationWhitelist = /^\s*(https?|ftp|mailto|tel|file):/;
-  var _imgSrcSanitizationWhitelist = /^\s*(https?|ftp|file):|data:image\//;
   var toString = Object.prototype.toString;
   var slice = Array.prototype.slice;
   var urlParsingNode = document.createElement('a');
@@ -34,28 +12,49 @@
     msie = int((/trident\/.*; rv:(\d+)/.exec(lowercase(navigator.userAgent)) || [])[1]);
   }
 
-  function imgSrcSanitizationWhitelist(regexp) {
-    if (isDefined(regexp)) {
-      _imgSrcSanitizationWhitelist = regexp;
-      return this;
-    }
-    return _imgSrcSanitizationWhitelist;
-  }
-  function aHrefSanitizationWhitelist(regexp) {
-    if (isDefined(regexp)) {
-      _aHrefSanitizationWhitelist = regexp;
-      return this;
-    }
-    return _aHrefSanitizationWhitelist;
-  }
-  function ngSanitize(html) {
-    var buf = [];
-    htmlParser(html, htmlSanitizeWriter(buf, function(uri, isImage) {
-      return !/^unsafe/.test(sanitizeUri(uri, isImage));
-    }));
-    return buf.join('');
+  function ngSanitize(config) {
+    this._imgSrcSanitizationWhitelist = config.imgSrcSanitizationWhitelist || /^\s*(https?|ftp|mailto|tel|file):/;
+    this._aHrefSanitizationWhitelist  = config.aHrefSanitizationWhitelist  || /^\s*(https?|ftp|file):|data:image\//;
+    this.sanitizeText = sanitizeText;
   }
 
+  ngSanitize.prototype.$sanitize = function(html) {
+    var self = this;
+    var buf = [];
+    htmlParser(html, htmlSanitizeWriter(buf, function(uri, isImage) {
+      return !/^unsafe/.test(self.sanitizeUri(uri, isImage));
+    }));
+    return buf.join('');
+  };
+
+  ngSanitize.prototype.imgSrcSanitizationWhitelist = function(regexp) {
+    if (isDefined(regexp)) {
+      this._imgSrcSanitizationWhitelist = regexp;
+      return this;
+    }
+    return this._imgSrcSanitizationWhitelist;
+  };
+
+  ngSanitize.prototype.aHrefSanitizationWhitelist = function(regexp) {
+    if (isDefined(regexp)) {
+      this._aHrefSanitizationWhitelist = regexp;
+      return this;
+    }
+    return this._aHrefSanitizationWhitelist;
+  };
+
+  function sanitizeUri(uri, isImage) {
+    var regex = isImage ? this._imgSrcSanitizationWhitelist : this._aHrefSanitizationWhitelist;
+    var normalizedVal;
+    // NOTE: urlResolve() doesn't support IE < 8 so we don't sanitize for that case.
+    if (!msie || msie >= 8 ) {
+      normalizedVal = urlResolve(uri).href;
+      if (normalizedVal !== '' && !normalizedVal.match(regex)) {
+        return 'unsafe:'+normalizedVal;
+      }
+    }
+    return uri;
+  }
   function noop() {}
   function isString(value){ return typeof value === 'string'; }
   function lowercase(string){ return isString(string) ? string.toLowerCase() : string; }
@@ -161,20 +160,6 @@
       pathname: (urlParsingNode.pathname.charAt(0) === '/') ? urlParsingNode.pathname : '/' + urlParsingNode.pathname
     };
   }
-
-  function sanitizeUri(uri, isImage) {
-    var regex = isImage ? _imgSrcSanitizationWhitelist : _aHrefSanitizationWhitelist;
-    var normalizedVal;
-    // NOTE: urlResolve() doesn't support IE < 8 so we don't sanitize for that case.
-    if (!msie || msie >= 8 ) {
-      normalizedVal = urlResolve(uri).href;
-      if (normalizedVal !== '' && !normalizedVal.match(regex)) {
-        return 'unsafe:'+normalizedVal;
-      }
-    }
-    return uri;
-  }
-
 
   function sanitizeText(chars) {
     var buf = [];
