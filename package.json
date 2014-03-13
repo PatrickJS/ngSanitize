@@ -1,7 +1,7 @@
 {
-  "name": "ngSanitize",
-  "version": "0.0.1",
-  "description": "angular-sanitize module without using the entire angular.js ",
+  "name": "ng-sanitize",
+  "version": "0.0.2",
+  "description": "angular-sanitize module without using the entire angular.js",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,7 +10,18 @@
     "type": "git",
     "url": "https://github.com/gdi2290/ngSanitize.git"
   },
-  "author": "Patrick Stapleton <github@gdi2290.com>",
+  "author": {
+    "name": "Patrick Stapleton",
+    "email": "patrick@gdi2290.com",
+    "url": "www.gdi2290.com"
+  },
+  "keywords": [
+    "angular",
+    "angular-sanitize",
+    "ngSanitize",
+    "ng-sanitize",
+    "sanitize"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/gdi2290/ngSanitize/issues"
