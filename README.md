@@ -1,7 +1,7 @@
 ngSanitize
 ==========
 
-angular-sanitize module without using the entire angular.js
+angular-sanitize module without including angular.js for Backbone and other frameworks
 
 
 ```javascript
